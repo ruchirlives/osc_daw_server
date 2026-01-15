@@ -390,8 +390,10 @@ void Conductor::oscAddInstrumentCommand(const juce::OSCMessage &message)
 		juce::String pluginInstanceId = message[1].getString();
 		int midiChannel = message[2].getInt32();
 
-		// Extract tags starting from index 3
-		std::vector<juce::String> tags = extractTags(message, 3);
+		juce::String tag = extractTag(message, 3);
+		std::vector<juce::String> tags;
+		if (tag.isNotEmpty())
+			tags.push_back(tag);
 
 		// Check if an instrument with the same pluginInstanceId and midiChannel already exists
 		for (auto &instrument : orchestra)
@@ -437,21 +439,21 @@ void Conductor::oscAddInstrumentCommand(const juce::OSCMessage &message)
 
 std::vector<std::pair<juce::String, int>> Conductor::extractPluginIdsAndChannels(const juce::OSCMessage &message, int startIndex)
 {
-	std::vector<juce::String> tags = extractTags(message, startIndex);
+	juce::String tag = extractTag(message, startIndex);
 	std::vector<std::pair<juce::String, int>> pluginIdsAndChannels;
 
 	// Find the plugin IDs associated with the tags and store them with the MIDI channel
-	for (const auto &tag : tags)
-	{
-		for (const auto &instrument : orchestra)
-		{
-			if (std::find(instrument.tags.begin(), instrument.tags.end(), tag) != instrument.tags.end())
-			{
-				// midiChannel is 0 based in OSC messages
-				int midiChannel = instrument.midiChannel - 1;
+	if (tag.isEmpty())
+		return pluginIdsAndChannels;
 
-				pluginIdsAndChannels.emplace_back(instrument.pluginInstanceId, midiChannel);
-			}
+	for (const auto &instrument : orchestra)
+	{
+		if (std::find(instrument.tags.begin(), instrument.tags.end(), tag) != instrument.tags.end())
+		{
+			// midiChannel is 0 based in OSC messages
+			int midiChannel = instrument.midiChannel - 1;
+
+			pluginIdsAndChannels.emplace_back(instrument.pluginInstanceId, midiChannel);
 		}
 	}
 	return pluginIdsAndChannels;
@@ -682,8 +684,7 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		std::vector<juce::String> tags = extractTags(message, 1);
-		juce::String tag = tags.empty() ? "" : tags[0];
+		juce::String tag = extractTag(message, 1);
 
 		for (const auto &instrument : orchestra)
 		{
@@ -1012,17 +1013,11 @@ juce::int64 Conductor::adjustTimestamp(const juce::OSCArgument timestampArg)
 }
 
 // Helper function to extract tags from the OSC message
-std::vector<juce::String> Conductor::extractTags(const juce::OSCMessage &message, int startIndex)
+juce::String Conductor::extractTag(const juce::OSCMessage &message, int index)
 {
-	std::vector<juce::String> tags;
-	for (int i = startIndex; i < message.size(); ++i)
-	{
-		if (message[i].isString())
-		{
-			tags.push_back(message[i].getString());
-		}
-	}
-	return tags;
+	if (index >= 0 && index < message.size() && message[index].isString())
+		return message[index].getString();
+	return {};
 }
 
 bool Conductor::selectInstrumentByTag(const juce::String &tag)

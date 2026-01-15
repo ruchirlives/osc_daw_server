@@ -78,7 +78,7 @@ private:
 
 
     // Helper function to extract tags from the OSC message
-    std::vector<juce::String> extractTags(const juce::OSCMessage& message, int startIndex);
+    juce::String extractTag(const juce::OSCMessage& message, int index);
     int calculateSampleOffsetForMessage(const juce::Time& messageTime, double sampleRate);
     std::vector<std::pair<juce::String, int>> extractPluginIdsAndChannels(const juce::OSCMessage& message, int startIndex);
     bool selectInstrumentByTag(const juce::String& tag);
