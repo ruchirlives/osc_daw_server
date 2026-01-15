@@ -1473,19 +1473,20 @@ void PluginManager::scanPlugins(juce::FileSearchPath searchPaths, bool replaceEx
 
     DBG((replaceExisting ? "Scanning (replace) for VST3 plugins in " : "Scanning (add) for VST3 plugins in ") << searchPaths.toString());
 
-    // Create a persistent VST3PluginFormat instance
     juce::VST3PluginFormat vst3Format;
+    const auto pluginFiles = vst3Format.searchPathsForPlugins(searchPaths, true, false);
 
-    juce::PluginDirectoryScanner scanner(knownPluginList, vst3Format, searchPaths, true, juce::File(), false);
-
-    juce::String nameOfPluginBeingScanned;
-    while (scanner.scanNextFile(true, nameOfPluginBeingScanned))
+    for (const auto &path : pluginFiles)
     {
-        juce::Thread::sleep(100);
+        const juce::File pluginFile(path);
+        if (!replaceExisting && knownPluginList.isListingUpToDate(pluginFile, vst3Format))
+            continue;
+
+        juce::String errorMessage;
+        knownPluginList.scanAndAddFile(path, true, vst3Format, errorMessage);
+
         if (knownPluginList.getNumTypes() > 50)
-        {
             break;
-        }
     }
 
     DBG("Scanning completed. " << knownPluginList.getNumTypes() << " VST3 Plugins Found");
