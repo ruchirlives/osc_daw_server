@@ -1476,14 +1476,13 @@ void PluginManager::scanPlugins(juce::FileSearchPath searchPaths, bool replaceEx
     juce::VST3PluginFormat vst3Format;
     const auto pluginFiles = vst3Format.searchPathsForPlugins(searchPaths, true, false);
 
+    juce::OwnedArray<juce::PluginDescription> typesFound;
     for (const auto &path : pluginFiles)
     {
-        const juce::File pluginFile(path);
-        if (!replaceExisting && knownPluginList.isListingUpToDate(pluginFile, vst3Format))
+        if (!replaceExisting && knownPluginList.isListingUpToDate(path, vst3Format))
             continue;
 
-        juce::String errorMessage;
-        knownPluginList.scanAndAddFile(path, true, vst3Format, errorMessage);
+        knownPluginList.scanAndAddFile(path, true, typesFound, vst3Format);
 
         if (knownPluginList.getNumTypes() > 50)
             break;
