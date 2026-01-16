@@ -1477,8 +1477,25 @@ void PluginManager::scanPlugins(juce::FileSearchPath searchPaths, bool replaceEx
     const auto pluginFiles = vst3Format.searchPathsForPlugins(searchPaths, true, false);
 
     juce::OwnedArray<juce::PluginDescription> typesFound;
+    const auto knownTypes = knownPluginList.getTypes();
     for (const auto &path : pluginFiles)
     {
+        if (!replaceExisting)
+        {
+            const auto isAlreadyKnown = [&knownTypes, &path]()
+            {
+                for (const auto &knownType : knownTypes)
+                {
+                    if (knownType.fileOrIdentifier == path)
+                        return true;
+                }
+                return false;
+            }();
+
+            if (isAlreadyKnown)
+                continue;
+        }
+
         if (!replaceExisting && knownPluginList.isListingUpToDate(path, vst3Format))
             continue;
 
