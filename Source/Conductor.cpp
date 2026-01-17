@@ -22,14 +22,28 @@ namespace
 
 	bool ensureIntOSCArgument(const juce::OSCMessage &message, int index, const char *context)
 	{
-		if (index >= 0 && index < message.size() && message[index].isInt32())
-			return true;
+		auto isNumericString = [](const juce::String &text)
+		{
+			auto trimmed = text.trim();
+			return trimmed.isNotEmpty() &&
+				   trimmed.containsAnyOf("0123456789") &&
+				   trimmed.containsOnly("0123456789+-.");
+		};
 
-#if JUCE_DEBUG
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "OSC %s argument %d expected Int32", context, index);
-		std::fprintf(stderr, "%s\n", buffer);
-#endif
+		if (index >= 0 && index < message.size())
+		{
+			const auto &arg = message[index];
+			if (arg.isInt32() || arg.isFloat32())
+				return true;
+			if (arg.isString() && isNumericString(arg.getString()))
+				return true;
+		}
+
+		#if JUCE_DEBUG
+				char buffer[256];
+				std::snprintf(buffer, sizeof(buffer), "OSC %s argument %d expected Int32/Float32/numeric String", context, index);
+				std::fprintf(stderr, "%s\n", buffer);
+		#endif
 		return false;
 	}
 
@@ -38,11 +52,11 @@ namespace
 		if (index >= 0 && index < message.size() && message[index].isString())
 			return true;
 
-#if JUCE_DEBUG
-		char buffer[256];
-		std::snprintf(buffer, sizeof(buffer), "OSC %s argument %d expected String", context, index);
-		std::fprintf(stderr, "%s\n", buffer);
-#endif
+		#if JUCE_DEBUG
+				char buffer[256];
+				std::snprintf(buffer, sizeof(buffer), "OSC %s argument %d expected String", context, index);
+				std::fprintf(stderr, "%s\n", buffer);
+		#endif
 		return false;
 	}
 
@@ -71,6 +85,17 @@ namespace
 		if (argument.isString())
 			return argument.getString().getDoubleValue();
 		return 0.0;
+	}
+
+	int parseOscIntArgument(const juce::OSCArgument &argument)
+	{
+		if (argument.isInt32())
+			return argument.getInt32();
+		if (argument.isFloat32())
+			return static_cast<int>(std::lround(argument.getFloat32()));
+		if (argument.isString())
+			return static_cast<int>(std::lround(argument.getString().getDoubleValue()));
+		return 0;
 	}
 
 }
@@ -473,8 +498,8 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int note = message[1].getInt32();
-		int velocity = message[2].getInt32();
+		int note = parseOscIntArgument(message[1]);
+		int velocity = parseOscIntArgument(message[2]);
 		juce::int64 timestamp = adjustTimestamp(message[3]);
 
 		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 4);
@@ -495,7 +520,7 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int note = message[1].getInt32();
+		int note = parseOscIntArgument(message[1]);
 		int velocity = 0;
 		juce::int64 timestamp = adjustTimestamp(message[2]);
 
@@ -517,8 +542,8 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int controllerNumber = message[1].getInt32();
-		int controllerValue = message[2].getInt32();
+		int controllerNumber = parseOscIntArgument(message[1]);
+		int controllerValue = parseOscIntArgument(message[2]);
 		juce::int64 timestamp = adjustTimestamp(message[3]);
 
 		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 4);
@@ -548,9 +573,9 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int controllerNumber = message[1].getInt32();
-		int startValue = message[2].getInt32();
-		int endValue = message[3].getInt32();
+		int controllerNumber = parseOscIntArgument(message[1]);
+		int startValue = parseOscIntArgument(message[2]);
+		int endValue = parseOscIntArgument(message[3]);
 		double durationSeconds = parseOscDoubleArgument(message[4]);
 		juce::int64 rampStart = adjustTimestamp(message[5]);
 
@@ -574,7 +599,7 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int value = message[1].getInt32();
+		int value = parseOscIntArgument(message[1]);
 		juce::int64 timestamp = adjustTimestamp(message[2]);
 
 		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 3);
@@ -597,8 +622,8 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int note = message[1].getInt32();
-		int value = message[2].getInt32();
+		int note = parseOscIntArgument(message[1]);
+		int value = parseOscIntArgument(message[2]);
 		juce::int64 timestamp = adjustTimestamp(message[3]);
 
 		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 4);
@@ -620,7 +645,7 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int pitchBendValue = message[1].getInt32();
+		int pitchBendValue = parseOscIntArgument(message[1]);
 		juce::int64 timestamp = adjustTimestamp(message[2]);
 
 		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 3);
@@ -641,7 +666,7 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
-		int programNumber = message[1].getInt32();
+		int programNumber = parseOscIntArgument(message[1]);
 		juce::int64 timestamp = adjustTimestamp(message[2]);
 		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 3);
 		for (const auto &[pluginId, channel] : pluginIdsAndChannels)
