@@ -573,13 +573,23 @@ void Conductor::oscProcessMIDIMessage(const juce::OSCMessage &message)
 			return;
 		}
 
+		DBG("Processing controller_ramp OSC message");
 		int controllerNumber = parseOscIntArgument(message[1]);
 		int startValue = parseOscIntArgument(message[2]);
 		int endValue = parseOscIntArgument(message[3]);
 		double durationSeconds = parseOscDoubleArgument(message[4]);
 		juce::int64 rampStart = adjustTimestamp(message[5]);
+		juce::String cc_profile = message[6].isString() ? message[6].getString() : "linear";
 
-		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 6);
+		std::vector<std::pair<juce::String, int>> pluginIdsAndChannels = extractPluginIdsAndChannels(message, 7);
+
+		// DBG("controller_ramp args - controllerNumber: " + juce::String(controllerNumber) +
+		// 	", startValue: " + juce::String(startValue) +
+		// 	", endValue: " + juce::String(endValue) +
+		// 	", durationSeconds: " + juce::String(durationSeconds) +
+		// 	", rampStart: " + juce::String(rampStart) +
+		// 	", cc_profile: " + cc_profile +
+		// 	", target plugins/channels: " + juce::String(pluginIdsAndChannels.size()));
 
 		for (const auto &[pluginId, channel] : pluginIdsAndChannels)
 		{
