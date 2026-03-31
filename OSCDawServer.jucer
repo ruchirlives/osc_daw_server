@@ -3,7 +3,7 @@
 <JUCERPROJECT id="k80e4I" name="OSCDawServer" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" defines="JUCE_MODAL_LOOPS_PERMITTED=1"
               bundleIdentifier="com.ruchirlives.OSCDawServer" binaryDataNamespace="BinaryData"
-              headerPath="F:\asiosdk_2.3.3_2019-06-14\common" companyCopyright="Ruchir Shah (c) 2024"
+              headerPath="E:\CODINGPROJECTS\SDKs\asiosdk_2.3.3_2019-06-14\common" companyCopyright="Ruchir Shah (c) 2024"
               companyEmail="@ruchirlives" companyWebsite="https://github.com/ruchirlives"
               version="2.0.1">
   <MAINGROUP id="pN3WCX" name="OSCDawServer">
