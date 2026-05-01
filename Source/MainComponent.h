@@ -112,7 +112,8 @@ public:
 	void refreshOrchestraTableUI();
 	void replacePluginForRow(int row, juce::Component* anchor);
 	void applyPluginReplacement(int row, const juce::String& pluginName);
-	void addInstrumentFromNkiFile(const juce::File& nkiFile);
+	void addInstrumentFromDroppedFile(const juce::File& droppedFile);
+	void updateInstrumentSourceFromDroppedFile(int row, const juce::File& droppedFile);
 
 private:
     juce::File pluginFolder; // Use a juce::File object instead of a pointer

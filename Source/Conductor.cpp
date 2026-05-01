@@ -1263,6 +1263,7 @@ void Conductor::saveOrchestraData(const juce::String &dataFilePath, const std::v
 			instrumentElement->setAttribute("instrumentName", instrument.instrumentName);
 			instrumentElement->setAttribute("pluginName", instrument.pluginName);
 			instrumentElement->setAttribute("pluginInstanceId", instrument.pluginInstanceId);
+			instrumentElement->setAttribute("sourceFilePath", instrument.sourceFilePath);
 			instrumentElement->setAttribute("midiChannel", instrument.midiChannel);
 
 			// Save tags as a sub-element
@@ -1306,6 +1307,7 @@ void Conductor::importOrchestraData(const juce::String &dataFilePath)
 				newInstrument.instrumentName = instrumentElement->getStringAttribute("instrumentName");
 				newInstrument.pluginName = instrumentElement->getStringAttribute("pluginName");
 				newInstrument.pluginInstanceId = instrumentElement->getStringAttribute("pluginInstanceId");
+				newInstrument.sourceFilePath = instrumentElement->getStringAttribute("sourceFilePath");
 				newInstrument.midiChannel = instrumentElement->getIntAttribute("midiChannel");
 
 				// Read tags from the "Tags" sub-element
@@ -1404,9 +1406,14 @@ void OrchestraTableModel::paintCell(juce::Graphics &g, int rowNumber, int column
 			g.drawText(juce::String(instrument.midiChannel), 2, 0, width, height, juce::Justification::centredLeft, true);
 			break;
 		case 5:
+		{
 			juce::String tags = convertVectorToString(instrument.tags);
 			g.drawText(tags, 2, 0, width, height, juce::Justification::centredLeft, true);
 
+			break;
+		}
+		case 6:
+			g.drawText(instrument.sourceFilePath, 2, 0, width, height, juce::Justification::centredLeft, true);
 			break;
 		}
 	}
@@ -1571,6 +1578,8 @@ juce::String OrchestraTableModel::getText(int columnNumber, int rowNumber) const
 		return juce::String(info.midiChannel);
 	case 5:
 		return convertVectorToString(info.tags);
+	case 6:
+		return info.sourceFilePath;
 	default:
 		return "Invalid column number";
 	}
@@ -1606,6 +1615,9 @@ void OrchestraTableModel::setText(int columnNumber, int rowNumber, const juce::S
 		}
 		break;
 	}
+	case 6:
+		info.sourceFilePath = newText;
+		break;
 	default:
 		break;
 	}
@@ -1636,6 +1648,9 @@ EditableTextCustomComponent::EditableTextCustomComponent(OrchestraTableModel &ow
 
 void EditableTextCustomComponent::mouseDown(const juce::MouseEvent &event)
 {
+	fileDragStarted = false;
+	rowWasSelectedOnMouseDown = row >= 0 && owner.table.isRowSelected(row);
+
 	if (event.mods.isRightButtonDown())
 	{
 		switch (columnId)
@@ -1656,13 +1671,72 @@ void EditableTextCustomComponent::mouseDown(const juce::MouseEvent &event)
 	}
 	else
 	{
-		// Existing behavior for left-click (row selection)
-		if (row != -1)
+		// Preserve an existing multi-selection until mouseUp so drag-out can include all selected rows.
+		if (row != -1 && !rowWasSelectedOnMouseDown)
 		{
 			owner.selectRow(row, event.mods);
 		}
 		juce::Label::mouseDown(event); // Call the base class method to retain default behavior
 	}
+}
+
+void EditableTextCustomComponent::mouseDrag(const juce::MouseEvent &event)
+{
+	if (fileDragStarted || !event.mods.isLeftButtonDown() || !event.mouseWasDraggedSinceMouseDown())
+	{
+		juce::Label::mouseDrag(event);
+		return;
+	}
+
+	auto files = getSourceFilePathsForDrag();
+	if (files.isEmpty())
+	{
+		juce::Label::mouseDrag(event);
+		return;
+	}
+
+	fileDragStarted = juce::DragAndDropContainer::performExternalDragDropOfFiles(files, false, this);
+}
+
+void EditableTextCustomComponent::mouseUp(const juce::MouseEvent &event)
+{
+	if (!fileDragStarted && rowWasSelectedOnMouseDown && !event.mouseWasDraggedSinceMouseDown() && row != -1)
+		owner.selectRow(row, event.mods);
+
+	fileDragStarted = false;
+	rowWasSelectedOnMouseDown = false;
+	juce::Label::mouseUp(event);
+}
+
+juce::StringArray EditableTextCustomComponent::getSourceFilePathsForDrag() const
+{
+	juce::StringArray files;
+	auto addFileIfValid = [&files](const InstrumentInfo& instrument)
+	{
+		auto file = juce::File(instrument.sourceFilePath);
+		if (file.existsAsFile())
+			files.addIfNotAlreadyThere(file.getFullPathName());
+	};
+
+	if (row < 0 || row >= static_cast<int>(owner.orchestraData.size()))
+		return files;
+
+	const auto selectedRows = owner.table.getSelectedRows();
+	if (owner.table.isRowSelected(row))
+	{
+		for (int i = 0; i < selectedRows.size(); ++i)
+		{
+			const auto selectedRow = selectedRows[i];
+			if (selectedRow >= 0 && selectedRow < static_cast<int>(owner.orchestraData.size()))
+				addFileIfValid(owner.orchestraData[static_cast<size_t>(selectedRow)]);
+		}
+	}
+	else
+	{
+		addFileIfValid(owner.orchestraData[static_cast<size_t>(row)]);
+	}
+
+	return files;
 }
 
 void EditableTextCustomComponent::showContextMenu_name()
@@ -2037,6 +2111,9 @@ void EditableTextCustomComponent::actionContextSelection(const juce::String &tex
 				}
 				break;
 			}
+			case 6: // Assuming column 6 is for Source Path
+				instrument.sourceFilePath = text;
+				break;
 			default:
 				DBG("Unknown column ID: " + juce::String(columnId));
 				break;

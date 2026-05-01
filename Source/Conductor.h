@@ -8,8 +8,9 @@
 struct InstrumentInfo
 {
     juce::String instrumentName;
-	juce::String pluginName;
+    juce::String pluginName;
     juce::String pluginInstanceId;
+    juce::String sourceFilePath;
     int midiChannel{ 0 };
     std::vector<juce::String> tags;
 
@@ -151,6 +152,8 @@ class EditableTextCustomComponent : public juce::Label
 public:
     EditableTextCustomComponent(OrchestraTableModel& ownerRef);
     void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
 	void showContextMenu_name();
 	void save_selection();
     void showContextMenu_tags();
@@ -165,7 +168,11 @@ public:
     void setRowAndColumn(int newRow, int newColumn);
 
 private:
+    juce::StringArray getSourceFilePathsForDrag() const;
+
     OrchestraTableModel& owner;
     int row, columnId;
+    bool fileDragStarted{ false };
+    bool rowWasSelectedOnMouseDown{ false };
 };
 
