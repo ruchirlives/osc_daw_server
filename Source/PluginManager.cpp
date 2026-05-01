@@ -336,7 +336,7 @@ void PluginManager::getNextAudioBlock(const juce::AudioSourceChannelInfo &buffer
             }
         };
 
-        drainTaggedMidiQueue(timelineTaggedMidiBuffer, playbackSamplePosition, "timeline");
+        drainTaggedMidiQueue(timelineTaggedMidiBuffer, timelinePlaybackSamplePosition, "timeline");
         drainTaggedMidiQueue(liveTaggedMidiBuffer, livePlaybackSamplePosition, "live");
 
         // 2) Process each plugin once, in a single loop
@@ -454,6 +454,7 @@ void PluginManager::getNextAudioBlock(const juce::AudioSourceChannelInfo &buffer
     incomingMidi.clear();
     playbackSamplePosition += bufferToFill.numSamples;
     livePlaybackSamplePosition += bufferToFill.numSamples;
+    timelinePlaybackSamplePosition += bufferToFill.numSamples;
 }
 
 void PluginManager::releaseResources()
@@ -2247,6 +2248,7 @@ void PluginManager::previewPlay()
 
         previewStartHostMs = nowMs;
         playbackSamplePosition = 0;
+        timelinePlaybackSamplePosition = 0;
     }
 
     enqueueMasterForPreview(snapshot, previewOffsetMs, baseTimestamp);
@@ -2403,6 +2405,7 @@ void PluginManager::resetPlayback()
 {
     playbackSamplePosition = 0;
     livePlaybackSamplePosition = 0;
+    timelinePlaybackSamplePosition = 0;
     hostPlayHead.positionInfo.setIsPlaying(false);
     const juce::ScopedLock sl(midiCriticalSection);
     timelineTaggedMidiBuffer.clear();
@@ -2411,8 +2414,7 @@ void PluginManager::resetPlayback()
 
 void PluginManager::resetTimelinePlayback()
 {
-    playbackSamplePosition = 0;
-    hostPlayHead.positionInfo.setIsPlaying(false);
+    timelinePlaybackSamplePosition = 0;
     const juce::ScopedLock sl(midiCriticalSection);
     timelineTaggedMidiBuffer.clear();
 }

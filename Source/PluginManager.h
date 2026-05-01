@@ -249,6 +249,7 @@ private:
     // playback counter
 	juce::int64 playbackSamplePosition = 0;
     juce::int64 livePlaybackSamplePosition = 0;
+    juce::int64 timelinePlaybackSamplePosition = 0;
     double currentBpm = 125.0; // Default BPM
     double currentSampleRate = 44100.0;
     int currentBlockSize = 0;
