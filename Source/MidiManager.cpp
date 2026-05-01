@@ -919,7 +919,7 @@ void MidiManager::republishRecordedEvents(const juce::MidiBuffer& bufferCopy)
         auto pluginId = mainComponent->getOrchestraTableModel().getSelectedPluginId();
         auto& pluginManager = mainComponent->getPluginManager();
 
-        pluginManager.resetPlayback();
+        pluginManager.resetTimelinePlayback();
 
         auto ticksPerSecond = juce::Time::getHighResolutionTicksPerSecond();
 
@@ -934,7 +934,7 @@ void MidiManager::republishRecordedEvents(const juce::MidiBuffer& bufferCopy)
                         timestampMs = static_cast<juce::int64>((static_cast<double>(ticks) * 1000.0) / static_cast<double>(ticksPerSecond));
 
                 juce::MidiMessage messageCopy = metadata.getMessage();
-                pluginManager.addMidiMessage(messageCopy, pluginId, timestampMs);
+                pluginManager.addTimelineMidiMessage(messageCopy, pluginId, timestampMs);
         }
 
         pluginManager.printTaggedMidiBuffer();

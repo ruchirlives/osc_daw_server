@@ -129,9 +129,11 @@ public:
 
     juce::String getPluginUniqueId(const juce::String& pluginId);
 
-    // Adds a tagged MIDI message to the taggedMidiBuffer
+    // Adds a live OSC/plugin-targeted MIDI message to the live queue.
 	void addMidiMessage(const juce::MidiMessage& message, const juce::String& pluginId, juce::int64& timestamp);
+    void addTimelineMidiMessage(const juce::MidiMessage& message, const juce::String& pluginId, juce::int64 timestamp);
 	void resetPlayback();
+    void resetTimelinePlayback();
 
     void stopAllNotes();
 
@@ -218,8 +220,10 @@ private:
     std::map<juce::String, std::unique_ptr<juce::AudioPluginInstance>> pluginInstances;
     std::map<juce::String, std::unique_ptr<PluginWindow>> pluginWindows;
 
-    // Chronologically sorted MIDI queue
-    std::deque<MyMidiMessage> taggedMidiBuffer;
+    // Chronologically sorted MIDI queues. Live OSC and timeline/overdub playback use
+    // separate clocks so overdub alignment does not rewind or drop pending OSC note-offs.
+    std::deque<MyMidiMessage> liveTaggedMidiBuffer;
+    std::deque<MyMidiMessage> timelineTaggedMidiBuffer;
     std::deque<MyMidiMessage> masterTaggedMidiBuffer;
     bool captureEnabled = false;
     double captureStartMs = -1.0;
@@ -244,6 +248,7 @@ private:
 
     // playback counter
 	juce::int64 playbackSamplePosition = 0;
+    juce::int64 livePlaybackSamplePosition = 0;
     double currentBpm = 125.0; // Default BPM
     double currentSampleRate = 44100.0;
     int currentBlockSize = 0;
