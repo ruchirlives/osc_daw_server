@@ -27,7 +27,7 @@ public:
 	void openMidiInput(juce::String midiInputName);
 	
 	void closeMidiInput();
-        void startOverdub(bool stopActiveNotes = true);
+        void startOverdub(bool stopActiveNotes = false);
 	void stopOverdub();
     void triggerOverdub();
     void playOverdub();
