@@ -132,6 +132,7 @@ public:
     // Adds a live OSC/plugin-targeted MIDI message to the live queue.
 	void addMidiMessage(const juce::MidiMessage& message, const juce::String& pluginId, juce::int64& timestamp);
     void addTimelineMidiMessage(const juce::MidiMessage& message, const juce::String& pluginId, juce::int64 timestamp);
+    void replaceTimelineMidiMessages(std::vector<MyMidiMessage> messages);
 	void resetPlayback();
     void resetTimelinePlayback();
 

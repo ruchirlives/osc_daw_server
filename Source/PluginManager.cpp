@@ -17,6 +17,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <algorithm>
 #include <limits>
+#include <iterator>
 #include "RenderTimeline.h"
 
 namespace
@@ -2385,6 +2386,28 @@ void PluginManager::addTimelineMidiMessage(const juce::MidiMessage &message, con
             lastOverflowLog = now;
         }
     }
+}
+
+void PluginManager::replaceTimelineMidiMessages(std::vector<MyMidiMessage> messages)
+{
+    std::sort(messages.begin(),
+              messages.end(),
+              [](const MyMidiMessage &a, const MyMidiMessage &b)
+              {
+                  return a.timestamp < b.timestamp;
+              });
+
+    if (messages.size() > kMaxTaggedMidiEvents)
+    {
+        messages.erase(messages.begin() + static_cast<std::ptrdiff_t>(kMaxTaggedMidiEvents), messages.end());
+        DBG("Warning: timeline MIDI queue exceeded " << (int)kMaxTaggedMidiEvents
+                                                     << " events; dropping far-future events.");
+    }
+
+    const juce::ScopedLock sl(midiCriticalSection);
+    timelinePlaybackSamplePosition = 0;
+    timelineTaggedMidiBuffer.assign(std::make_move_iterator(messages.begin()),
+                                    std::make_move_iterator(messages.end()));
 }
 
 void PluginManager::insertIntoMasterCapture(MyMidiMessage message)
