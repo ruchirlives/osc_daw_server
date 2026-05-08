@@ -1442,7 +1442,7 @@ void OrchestraTableModel::selectRow(int row, const juce::ModifierKeys &modifiers
 	sendTags(row);
 
 	// Copy first tag in Tags to clipboard
-	// juce::SystemClipboard::copyTextToClipboard(orchestraData[row].tags.empty() ? "" : orchestraData[row].tags[0]);
+	juce::SystemClipboard::copyTextToClipboard(orchestraData[row].tags.empty() ? "" : orchestraData[row].tags[0]);
 }
 
 void OrchestraTableModel::selectedRowsChanged(int lastRowSelected)
