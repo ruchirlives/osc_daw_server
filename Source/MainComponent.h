@@ -112,7 +112,7 @@ public:
 	void refreshOrchestraTableUI();
 	void replacePluginForRow(int row, juce::Component* anchor);
 	void applyPluginReplacement(int row, const juce::String& pluginName);
-	void addInstrumentFromDroppedFile(const juce::File& droppedFile);
+	void addInstrumentFromDroppedFile(const juce::File& droppedFile, const juce::String& pluginInstanceIdToUse = {}, int midiChannelToUse = 0);
 	void updateInstrumentSourceFromDroppedFile(int row, const juce::File& droppedFile);
 
 private:
@@ -122,6 +122,8 @@ private:
     LayoutMetrics getLayoutMetrics() const;
 
     juce::File getDefaultDawServerDir() const;
+	juce::String getUniqueDroppedPluginInstanceId(const juce::String& pluginType) const;
+	int getNextDroppedMidiChannel(const juce::String& pluginInstanceId) const;
 
     struct ButtonPanelLayout
     {
