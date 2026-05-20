@@ -84,6 +84,35 @@ The `/midi/message` listener reads a command name as the first string followed b
 5. Right click on Tags to select new Tags which you can match in the VST3 Client Plugin to send to this instrument.
 6. Right click on the other columns of the entry for various other features and options.
 
+## Drag and drop
+
+The main window accepts file drops for project restore and orchestra-table setup.
+
+- Drop an `.oscdaw` project archive onto the window to restore that project.
+- Windows `.lnk` shortcuts are resolved before processing, so dropping a shortcut behaves like dropping its target file.
+- Drop one or more non-project files onto the window to create orchestra rows. Each new row stores:
+  - `Instrument Name`: the dropped filename without its extension.
+  - `Plugin Name`: the mapped plugin type for the extension.
+  - `Plugin Instance ID`: shared by files of the same mapped plugin type in the same drop batch.
+  - `MIDI Channel`: assigned sequentially per shared plugin instance.
+  - `Tags`: the dropped filename without its extension.
+  - `Source Path`: the resolved full file path.
+- If more than 16 MIDI channels are needed for one plugin type in a drop batch, a new plugin instance ID is created for the remaining files.
+- Dropping a file over an existing selected row updates that row's `Plugin Name`, `Tags`, and `Source Path` instead of adding a new row. The row's `Instrument Name` and `Plugin Instance ID` are preserved.
+- Dropping over an unselected row uses the normal add-row behaviour.
+- After a drop, the first tag for the affected/new row is copied to the system clipboard, matching normal row selection behaviour.
+
+Current plugin type mappings:
+
+- `.nki`, `.nksn` -> `Kontakt`
+- `.nksf`, `.ytil` -> `Komplete Kontrol`
+- `.mid`, `.midi` -> `MIDI`
+- `.wav`, `.aif`, `.aiff`, `.flac`, `.mp3`, `.ogg` -> `Audio`
+- `.vstpreset` -> `VST Preset`
+- Unmapped extensions use the extension itself as the plugin type.
+
+Rows can also be dragged out from the orchestra table. Dragging a row with a valid `Source Path` starts an external file drag for that file. If multiple rows are selected and the drag starts from one of the selected rows, all selected rows with valid source paths are included.
+
 ## Compiling
 
 1. Install JUCE (https://juce.com/get-juce)
