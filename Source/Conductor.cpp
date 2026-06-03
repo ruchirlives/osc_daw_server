@@ -325,7 +325,17 @@ void Conductor::oscMessageReceived(const juce::OSCMessage &message)
 			{
 				// activate get_recorded method
 				DBG("Received get_recorded command");
-				midiManager.getRecorded();
+				juce::File requestedOutputFile;
+				if (message.size() >= 2 && message[1].isString())
+				{
+					auto requestedPath = message[1].getString().trim();
+					if (requestedPath.isNotEmpty())
+					{
+						requestedOutputFile = juce::File(requestedPath);
+						DBG("Requested recorded MIDI output path: " + requestedOutputFile.getFullPathName());
+					}
+				}
+				midiManager.getRecorded(requestedOutputFile);
 			}
 			else if (messageType == "select_by_tag")
 			{

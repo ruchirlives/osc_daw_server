@@ -33,7 +33,7 @@ public:
     void playOverdub();
 	void stripLeadingSilence();
 	void undoLastOverdub();
-	void getRecorded();
+	void getRecorded(const juce::File& requestedOutputFile = {});
 	void clearRecordedBuffer();
 	void sendTestNote();
 	void bakeOverdubIntoMaster();
@@ -45,7 +45,7 @@ public:
         bool hasRecordedEvents() const;
 
         // Declaration of the function to process recorded MIDI
-        void processRecordedMidi();
+        void processRecordedMidi(const juce::File& requestedOutputFile = {});
 	bool isOverdubbing = false;
 	bool isStripped = false;
     bool playOverdubOnTriggerArmed = false;
@@ -57,7 +57,7 @@ public:
 	juce::CriticalSection& getCriticalSection() { return midiCriticalSection; }
 
 	// Save to MIDI file
-    void saveToMidiFile(juce::MidiMessageSequence& recordedMIDI);
+    void saveToMidiFile(juce::MidiMessageSequence& recordedMIDI, const juce::File& requestedOutputFile = {});
 
     std::unique_ptr<juce::Thread> playbackThread;
     std::atomic<bool> playbackThreadShouldRun{ false };

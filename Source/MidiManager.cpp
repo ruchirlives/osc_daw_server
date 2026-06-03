@@ -440,12 +440,12 @@ void MidiManager::undoLastOverdub()
         republishRecordedEvents(bufferCopy);
 }
 
-void MidiManager::getRecorded()
+void MidiManager::getRecorded(const juce::File& requestedOutputFile)
 {
 	// Lock the MIDI critical section
 	const juce::ScopedLock sl(midiCriticalSection);
 
-	processRecordedMidi();
+	processRecordedMidi(requestedOutputFile);
 }
 
 void MidiManager::clearRecordedBuffer()
@@ -483,7 +483,7 @@ void MidiManager::sendTestNote()
 		});
 }
 
-void MidiManager::processRecordedMidi()
+void MidiManager::processRecordedMidi(const juce::File& requestedOutputFile)
 {
 	// Lock the MIDI critical section
 	const juce::ScopedLock sl(midiCriticalSection);
@@ -556,20 +556,30 @@ void MidiManager::processRecordedMidi()
 	}
 
 	// Finally, write out to your MIDI file
-        saveToMidiFile(recordedMidi);
+        saveToMidiFile(recordedMidi, requestedOutputFile);
 }
 
 
 
-void MidiManager::saveToMidiFile(juce::MidiMessageSequence& recordedMIDI)
+void MidiManager::saveToMidiFile(juce::MidiMessageSequence& recordedMIDI, const juce::File& requestedOutputFile)
 {
-    // Create OSCDawServer subfolder in user's documents directory
-    juce::File dawServerDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("OSCDawServer");
-    if (!dawServerDir.exists())
-        dawServerDir.createDirectory();
+    juce::File midiFile = requestedOutputFile;
+    if (midiFile.getFullPathName().isEmpty())
+    {
+        // Create OSCDawServer subfolder in user's documents directory
+        juce::File dawServerDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("OSCDawServer");
+        if (!dawServerDir.exists())
+            dawServerDir.createDirectory();
 
-    // Save MIDI file in OSCDawServer subfolder
-    juce::File midiFile = dawServerDir.getChildFile("recordedMIDI.mid");
+        // Save MIDI file in OSCDawServer subfolder
+        midiFile = dawServerDir.getChildFile("recordedMIDI.mid");
+    }
+    else
+    {
+        auto parentDir = midiFile.getParentDirectory();
+        if (!parentDir.exists())
+            parentDir.createDirectory();
+    }
 
     if (recordedMIDI.getNumEvents() == 0)
     {
